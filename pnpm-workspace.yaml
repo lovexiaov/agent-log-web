@@ -1,4 +1,9 @@
 # 单包仓库（不在 packages/* 下）：这里只声明允许执行构建脚本的依赖。
-# pnpm 12 会把未声明的构建脚本当作可疑而直接报错中止安装。
+# pnpm 12 会把未声明的构建脚本当作可疑而直接报错中止安装（esbuild 来自 vitest）。
+#
+# 注意：本仓库作为 submodule 被 ai-dev-spec 挂载时，pnpm 只读**宿主根**的
+# pnpm-workspace.yaml，本文件设置不生效（宿主已声明同样的 allowBuilds）。
+# 因此宿主 `pnpm install` 会打印一条 "settings do not apply" 的 WARN，属预期行为，
+# 不是配置错误——删掉本文件会让独立开发时的安装直接失败。
 allowBuilds:
   esbuild: true
