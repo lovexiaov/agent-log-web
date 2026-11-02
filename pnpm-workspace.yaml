@@ -1,0 +1,4 @@
+# 单包仓库（不在 packages/* 下）：这里只声明允许执行构建脚本的依赖。
+# pnpm 12 会把未声明的构建脚本当作可疑而直接报错中止安装。
+allowBuilds:
+  esbuild: true
