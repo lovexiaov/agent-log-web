@@ -1,6 +1,6 @@
 {
-  "name": "@scaffold/observability",
-  "version": "0.1.0",
+  "name": "cn.lovexiaov.agent.log",
+  "version": "1.2.0",
   "description": "面向 Agent 的 Web 可观测底座：结构化日志（Schema v1）、追踪串联、前端崩溃捕获、AI 交互事件",
   "type": "module",
   "license": "MIT",

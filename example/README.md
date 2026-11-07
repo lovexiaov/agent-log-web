@@ -1,6 +1,6 @@
 # Web 示例演示
 
-演示 [@scaffold/observability](../README.md)（TypeScript）的端到端用法，对应契约要求的全部能力：
+演示 [cn.lovexiaov.agent.log](../README.md)（TypeScript）的端到端用法，对应契约要求的全部能力：
 
 - `createLogger` 引导（`service` / `env` / `level` / `format` / `redactPaths`）
 - 6 档级别：`trace / debug / info / warn / error / critical`

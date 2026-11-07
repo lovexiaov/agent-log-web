@@ -2,7 +2,7 @@
 
 面向 **Agent（AI 调试/排障）** 的 Web 可观测底座。**零业务依赖**，一处初始化，业务侧不写埋点代码即可获得结构化日志、追踪串联、前端崩溃捕获与 AI 交互事件。
 
-> 仓库名 `agent-log-web` 是品牌（与 macOS 端 `agent-log-macos` 成对）；npm 包名沿用 `@scaffold/observability`，**接入方 import 路径不受仓库拆分影响**。
+> 仓库名 `agent-log-web` 是品牌（与 macOS 端 `agent-log-macos` 成对）；npm 包名沿用 `cn.lovexiaov.agent.log`，**接入方 import 路径不受仓库拆分影响**。
 > 独立仓库，由 `ai-dev-spec` 以 git submodule 挂在 `logging-framework/web/Observability`。
 
 ## 状态
@@ -29,7 +29,7 @@
 （映射规则真源：`ai-dev-spec/docs/logging-framework/OTLP-MAPPING.md`）。
 
 ```ts
-import { toOtlp, toOtlpJSON, createOtlpSink, createLogger } from "@scaffold/observability";
+import { toOtlp, toOtlpJSON, createOtlpSink, createLogger } from "cn.lovexiaov.agent.log";
 
 // 1) 直接把事件转成 OTLP/JSON，自己发请求
 const batch = toOtlp(events);
@@ -53,7 +53,7 @@ const { logs, traces } = otlp.drain(); // 缓冲区清空，返回可序列化�
 ## 快速接入
 
 ```ts
-import { createLogger } from "@scaffold/observability";
+import { createLogger } from "cn.lovexiaov.agent.log";
 
 const logger = createLogger({
   service: "web-api",
@@ -74,7 +74,7 @@ logger 在序列化边界映射为 snake_case；**其余键一律进 `payload`**
 ### 追踪串联
 
 ```ts
-import { runWithTrace, traceIdFromHeaders, outgoingHeaders } from "@scaffold/observability";
+import { runWithTrace, traceIdFromHeaders, outgoingHeaders } from "cn.lovexiaov.agent.log";
 
 app.use((req, res, next) => runWithTrace(traceIdFromHeaders(req.headers), () => next()));
 fetch("https://downstream", { headers: outgoingHeaders() }); // 自动带 x-request-id + traceparent
@@ -83,8 +83,8 @@ fetch("https://downstream", { headers: outgoingHeaders() }); // 自动带 x-requ
 ### 前端（React）
 
 ```tsx
-import { ErrorBoundary, createBrowserLogger } from "@scaffold/observability/frontend";
-import { logAiRequest, logAiResponse } from "@scaffold/observability/frontend/ai-events";
+import { ErrorBoundary, createBrowserLogger } from "cn.lovexiaov.agent.log/frontend";
+import { logAiRequest, logAiResponse } from "cn.lovexiaov.agent.log/frontend/ai-events";
 
 const logger = createBrowserLogger({ service: "web", env: "production", endpoint: "/api/log" });
 logAiRequest(logger, { sessionId: "s1", model: "gpt-4o" }, "总结这段对话");
@@ -109,7 +109,7 @@ pnpm build       # tsc -> dist
 宿主 `ai-dev-spec` 里路径为 `logging-framework/web/Observability`，并在 `pnpm-workspace.yaml` 注册为 workspace 成员：
 
 - 依赖由**宿主根 lockfile** 统一解析（本仓库自带的 `pnpm-lock.yaml` 仅服务独立开发，被宿主安装时忽略）；
-- 包名仍是 `@scaffold/observability`，workspace 内 import 与目录名无关；
+- 包名仍是 `cn.lovexiaov.agent.log`，workspace 内 import 与目录名无关；
 - 宿主侧 `pnpm -r typecheck|test` 会连带跑本包的门禁。
 
 ## 设计边界
