@@ -21,6 +21,34 @@
 | 前端 | `src/frontend/` | React `ErrorBoundary`（崩溃捕获上报）、`createBrowserLogger` |
 | Agent 进度事件 | `src/agent-events.ts` | `agent_step / agent_handoff / agent_decision / agent_blocked` |
 | AI 交互事件 | `src/frontend/ai-events.ts` | `ai_request_initiated / ai_tool_call_* / ai_response_received / ai_error` |
+| OTLP 适配 | `src/otlp.ts` | Schema v1 → OTLP/JSON（LogRecord + Client Span），浏览器可用 |
+
+## OTLP 导出
+
+`src/otlp.ts` 把 Schema v1 事件映射成 OTLP/JSON，可直接 POST 给任何 OTLP/HTTP 后端
+（映射规则真源：`ai-dev-spec/docs/logging-framework/OTLP-MAPPING.md`）。
+
+```ts
+import { toOtlp, toOtlpJSON, createOtlpSink, createLogger } from "@scaffold/observability";
+
+// 1) 直接把事件转成 OTLP/JSON，自己发请求
+const batch = toOtlp(events);
+await fetch("/v1/logs", { method: "POST", body: toOtlpJSON(batch.logs) });
+
+// 2) 或者挂成 sink 缓冲，攒批后 drain 出两个信号
+const otlp = createOtlpSink({ extraResource: { "deployment.environment": "prod" } });
+const logger = createLogger({ service: "web-api", env: "prod", sink: otlp.sink });
+// ...业务写日志...
+const { logs, traces } = otlp.drain(); // 缓冲区清空，返回可序列化的批次
+```
+
+实现要点（都是浏览器里真实会踩的坑）：
+
+- **纳秒必须用 `BigInt`**：epoch 纳秒约 1.8e18，超过 `Number.MAX_SAFE_INTEGER`，用 number 会丢精度；
+  对外统一以字符串输出（`timeUnixNano` 是 int64）。
+- **同步 SHA-256 自实现**（`src/sha256.ts`）：浏览器只有异步 `crypto.subtle`，而 id 派生必须在
+  `toOtlp()` 里同步完成，故内置纯 TS 实现，已用标准向量 + Python `hashlib` 交叉验证。
+- **零第三方依赖**：不引入 OTel JS SDK，产出的是 OTLP/JSON 结构体，传输交回宿主 `fetch`。
 
 ## 快速接入
 

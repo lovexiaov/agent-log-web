@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { normalizeSpanId } from "./ids.js";
 import {
   DEFAULT_REDACT_PATHS,
   type LogContext,
@@ -32,15 +33,10 @@ const RESERVED_CONTEXT_KEYS = [
 ] as const;
 
 /**
- * Schema v1.1 span id: 16 lowercase hex chars (same shape as the W3C
- * traceparent span-id). Returns undefined for anything else, so an invalid
- * value is dropped instead of producing a schema-violating line.
+ * Schema v1.1 span id 归一化（实现下沉到 `ids.ts`，供 OTLP 适配器共用；
+ * 这里重新导出，保持 `import { normalizeSpanId } from './logger'` 的调用方向后兼容）。
  */
-export function normalizeSpanId(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return /^[0-9a-fA-F]{16}$/.test(trimmed) ? trimmed.toLowerCase() : undefined;
-}
+export { normalizeSpanId } from "./ids.js";
 
 /** 进程 / 页面级会话 id：一次运行 = 一个 session_id，与 macOS 端 Session.id 语义一致。 */
 const PROCESS_SESSION_ID = randomUUID();
