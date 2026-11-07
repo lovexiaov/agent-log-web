@@ -88,7 +88,7 @@ describe("Schema v1（线格式）", () => {
     const { logger, lines } = makeLogger({ subsystem: "com.test.web" });
     logger.info("hello", {
       userId: "u1",
-      traceId: "t1",
+      traceId: "0123456789abcdef0123456789abcde1",
       category: "auth",
       extraField: 1,
     });
@@ -116,7 +116,7 @@ describe("Schema v1（线格式）", () => {
     // 映射结果正确
     expect(evt.event_type).toBe("log");
     expect(evt.session_id).toBeTruthy();
-    expect(evt.trace_id).toBe("t1");
+    expect(evt.trace_id).toBe("0123456789abcdef0123456789abcde1");
     expect(evt.user_id).toBe("u1");
     expect(evt.category).toBe("auth");
     expect(evt.subsystem).toBe("com.test.web");
@@ -149,8 +149,8 @@ describe("Schema v1（线格式）", () => {
 
   it("child 绑定的 trace_id 会带到后续事件", () => {
     const { logger, lines } = makeLogger();
-    logger.child({ traceId: "t-child" }).info("a");
-    expect(parse(lines[0]).trace_id).toBe("t-child");
+    logger.child({ traceId: "0123456789abcdef0123456789abcde2" }).info("a");
+    expect(parse(lines[0]).trace_id).toBe("0123456789abcdef0123456789abcde2");
   });
 
   it("child 绑定的 span_id 归一化为小写并带到后续事件", () => {

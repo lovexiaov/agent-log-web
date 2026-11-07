@@ -19,3 +19,18 @@ export function normalizeSpanId(value: unknown): string | undefined {
   const trimmed = value.trim();
   return /^[0-9a-fA-F]{16}$/.test(trimmed) ? trimmed.toLowerCase() : undefined;
 }
+
+/**
+ * 归一化 trace id（Schema v1.2）：32 位 hex（大小写不敏感）→ 小写；其他一律
+ * 返回 `undefined`。
+ *
+ * 与 span id 同一策略：非法值在写入边界丢弃（事件照写），绝不变形、绝不派生
+ * —— OTLP `traceId` 就是调用方给的那个值，可逆、可搜索。
+ */
+export function normalizeTraceId(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return /^[0-9a-fA-F]{32}$/.test(trimmed) ? trimmed.toLowerCase() : undefined;
+}

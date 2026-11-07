@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { normalizeSpanId } from "./ids.js";
 import {
   DEFAULT_REDACT_PATHS,
   type LogContext,
@@ -36,10 +35,20 @@ const RESERVED_CONTEXT_KEYS = [
  * Schema v1.1 span id 归一化（实现下沉到 `ids.ts`，供 OTLP 适配器共用；
  * 这里重新导出，保持 `import { normalizeSpanId } from './logger'` 的调用方向后兼容）。
  */
-export { normalizeSpanId } from "./ids.js";
+export { normalizeSpanId, normalizeTraceId } from "./ids.js";
+import { normalizeSpanId, normalizeTraceId } from "./ids.js";
 
-/** 进程 / 页面级会话 id：一次运行 = 一个 session_id，与 macOS 端 Session.id 语义一致。 */
-const PROCESS_SESSION_ID = randomUUID();
+/**
+ * 生成一个 Schema v1.2 合法的 trace id：32 位小写 hex（UUID 去横线）。
+ * 典型用法：`logger.child({ traceId: newTraceId() })`。
+ */
+export function newTraceId(): string {
+  return randomUUID().replace(/-/g, "");
+}
+
+/** 进程 / 页面级会话 id：一次运行 = 一个 session_id，与 macOS 端 Session.id 语义一致。
+ *  32 位小写 hex —— 让 `trace_id = session_id` 这个最自然的绑定永远合法。 */
+const PROCESS_SESSION_ID = randomUUID().replace(/-/g, "");
 
 /** 深拷贝并就地脱敏：按点分路径（相对 payload）把敏感字段替换成 [REDACTED] */
 function redact(value: unknown, paths: string[], prefix = ""): unknown {
@@ -130,7 +139,8 @@ export class Logger {
 
     const ctxEvent = merged.event;
     const sessionId = merged.sessionId;
-    const traceId = merged.traceId;
+    // Schema v1.2：非法 traceId 丢弃（事件照写），大写归一为小写。
+    const traceId = normalizeTraceId(merged.traceId);
     const spanId = normalizeSpanId(merged.spanId);
     const userId = merged.userId;
     const category = merged.category;
@@ -147,7 +157,7 @@ export class Logger {
       agent_auto:
         typeof agentAuto === "boolean" ? agentAuto : this.opts.agentAuto,
       message,
-      ...(typeof traceId === "string" ? { trace_id: traceId } : {}),
+      ...(traceId ? { trace_id: traceId } : {}),
       ...(spanId ? { span_id: spanId } : {}),
       ...(this.opts.subsystem ? { subsystem: this.opts.subsystem } : {}),
       ...(typeof category === "string" ? { category } : {}),

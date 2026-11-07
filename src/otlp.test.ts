@@ -161,13 +161,10 @@ describe("id 派生（确定性、可重放）", () => {
     expect(traceIdHex(makeEvent({ trace_id: TRACE.toUpperCase() }))).toBe(TRACE);
   });
 
-  it("hashes opaque trace ids deterministically", () => {
-    const event = makeEvent({ trace_id: "opaque-trace" });
-    const derived = traceIdHex(event);
-    expect(derived).toMatch(/^[0-9a-f]{32}$/);
-    expect(traceIdHex(event)).toBe(derived);
-    // 与 Python/Java 同一派生规则
-    expect(derived).toBe(sha256Hex("agentlog:trace:opaque-trace").slice(0, 32));
+  it("drops non-hex trace ids instead of inventing one (Schema v1.2)", () => {
+    for (const bad of ["opaque-trace", "0123456789abcdef0123456789abcde", 42, null]) {
+      expect(traceIdHex(makeEvent({ trace_id: bad as never }))).toBeUndefined();
+    }
   });
 
   it("returns undefined when the event has no trace id", () => {

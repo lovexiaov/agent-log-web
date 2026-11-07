@@ -20,7 +20,7 @@
  *    因此这里用零依赖的同步实现（`./sha256.js`，已用标准向量 + Python 交叉验证）。
  */
 
-import { normalizeSpanId } from "./ids.js";
+import { normalizeSpanId, normalizeTraceId } from "./ids.js";
 import { sha256Hex } from "./sha256.js";
 import type { LogEvent } from "./types.js";
 
@@ -73,7 +73,6 @@ const DB_OPERATION_KEYS = ["operation", "op"] as const;
 
 const TS_RE =
   /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:?\d{2})?$/;
-const HEX32_RE = /^[0-9a-fA-F]{32}$/;
 const URL_HOST_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/([^/?#]+)/;
 
 // ---------------------------------------------------------------------------
@@ -271,14 +270,9 @@ export function parseTimestampNanos(ts: string): bigint {
  * 确定性派生，保证共享同一逻辑 trace 的事件落进同一条 OTLP trace。
  */
 export function traceIdHex(event: LogEvent): string | undefined {
-  const raw = event.trace_id;
-  if (!raw) {
-    return undefined;
-  }
-  if (HEX32_RE.test(raw)) {
-    return raw.toLowerCase();
-  }
-  return sha256Hex(`agentlog:trace:${raw}`).slice(0, 32);
+  // Schema v1.2：trace_id 必须是 32 位 hex（大写归一）。非法值不派生、不变形
+  // —— 写入边界已丢弃，到这里的非法值只能来自手工构造的字典，同样按无 trace 处理。
+  return normalizeTraceId(event.trace_id);
 }
 
 /**

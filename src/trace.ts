@@ -4,6 +4,7 @@
  * 不依赖 AsyncLocalStorage，浏览器/Node 通用。
  */
 
+import { normalizeTraceId } from './ids.js';
 import { randomUUID } from 'node:crypto';
 
 const TRACE_HEADER = 'x-request-id';
@@ -13,8 +14,9 @@ const TRACEPARENT_HEADER = 'traceparent';
 let currentTraceId: string | undefined;
 const listeners = new Set<(id: string | undefined) => void>();
 
+/** 生成 Schema v1.2 合法的 trace id：32 位小写 hex（UUID 去横线）。 */
 export function generateTraceId(): string {
-  return randomUUID();
+  return randomUUID().replace(/-/g, '');
 }
 
 export function getTraceId(): string | undefined {
@@ -39,12 +41,21 @@ export function onTraceChange(cb: (id: string | undefined) => void): () => void 
   return () => listeners.delete(cb);
 }
 
-/** 从入站请求头解析 traceId（优先 x-request-id，其次 traceparent） */
+/**
+ * 从入站请求头解析 traceId（优先 x-request-id，其次 traceparent）。
+ *
+ * Schema v1.2 要求 32 位 hex：非 hex 的自定义请求 id 无法作为 trace id
+ * 使用（写入边界会丢弃），此时回退 traceparent，再回退新生成。上游自定义
+ * id 与本系统 trace 的关联应由调用方在业务层显式维护。
+ */
 export function traceIdFromHeaders(headers: Record<string, string | undefined>): string {
   const rid = headers[TRACE_HEADER];
-  if (rid) return rid;
+  if (rid && normalizeTraceId(rid)) return normalizeTraceId(rid)!;
   const tp = headers[TRACEPARENT_HEADER];
-  if (tp) return tp.split('-')[1] ?? generateTraceId();
+  if (tp) {
+    const fromTp = normalizeTraceId(tp.split('-')[1]);
+    if (fromTp) return fromTp;
+  }
   return generateTraceId();
 }
 
