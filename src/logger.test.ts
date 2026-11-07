@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createLogger } from "./logger.js";
+import { createLogger, normalizeSpanId } from "./logger.js";
 import {
   generateTraceId,
   runWithTrace,
@@ -151,6 +151,49 @@ describe("Schema v1（线格式）", () => {
     const { logger, lines } = makeLogger();
     logger.child({ traceId: "t-child" }).info("a");
     expect(parse(lines[0]).trace_id).toBe("t-child");
+  });
+
+  it("child 绑定的 span_id 归一化为小写并带到后续事件", () => {
+    const { logger, lines } = makeLogger();
+    const bound = logger.child({
+      traceId: "0123456789abcdef0123456789abcdef",
+      spanId: "A1B2C3D4E5F60718",
+    });
+    bound.info("inside span");
+    bound.warn("still inside");
+
+    for (const line of lines) {
+      const evt = parse(line);
+      expect(evt.span_id).toBe("a1b2c3d4e5f60718");
+      expect(evt.trace_id).toBe("0123456789abcdef0123456789abcdef");
+    }
+  });
+
+  it("非法 span_id 被丢弃而不是写出", () => {
+    const { logger, lines } = makeLogger();
+    for (const bad of ["not-a-span", "a1b2c3d4e5f6071", "zzzzzzzzzzzzzzzz"]) {
+      logger.child({ spanId: bad }).info("bad");
+    }
+    expect(lines).toHaveLength(3);
+    for (const line of lines) {
+      expect(parse(line)).not.toHaveProperty("span_id");
+    }
+  });
+
+  it("span_id 不会被当成普通字段塞进 payload", () => {
+    const { logger, lines } = makeLogger();
+    logger.child({ spanId: "a1b2c3d4e5f60718" }).info("x");
+    const evt = parse(lines[0]);
+    expect(evt.payload ?? {}).not.toHaveProperty("spanId");
+    expect(evt.payload ?? {}).not.toHaveProperty("span_id");
+  });
+
+  it("normalizeSpanId 只接受 16 位十六进制", () => {
+    expect(normalizeSpanId("A1B2C3D4E5F60718")).toBe("a1b2c3d4e5f60718");
+    expect(normalizeSpanId(" a1b2c3d4e5f60718 ")).toBe("a1b2c3d4e5f60718");
+    expect(normalizeSpanId("a1b2c3d4e5f6071")).toBeUndefined();
+    expect(normalizeSpanId("g1b2c3d4e5f60718")).toBeUndefined();
+    expect(normalizeSpanId(undefined)).toBeUndefined();
   });
 
   it("level 词表与 schema 一致，warning 不再作为写入值", () => {

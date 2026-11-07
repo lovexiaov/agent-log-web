@@ -25,10 +25,22 @@ const RESERVED_CONTEXT_KEYS = [
   "userId",
   "sessionId",
   "traceId",
+  "spanId",
   "event",
   "category",
   "agentAuto",
 ] as const;
+
+/**
+ * Schema v1.1 span id: 16 lowercase hex chars (same shape as the W3C
+ * traceparent span-id). Returns undefined for anything else, so an invalid
+ * value is dropped instead of producing a schema-violating line.
+ */
+export function normalizeSpanId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return /^[0-9a-fA-F]{16}$/.test(trimmed) ? trimmed.toLowerCase() : undefined;
+}
 
 /** 进程 / 页面级会话 id：一次运行 = 一个 session_id，与 macOS 端 Session.id 语义一致。 */
 const PROCESS_SESSION_ID = randomUUID();
@@ -123,6 +135,7 @@ export class Logger {
     const ctxEvent = merged.event;
     const sessionId = merged.sessionId;
     const traceId = merged.traceId;
+    const spanId = normalizeSpanId(merged.spanId);
     const userId = merged.userId;
     const category = merged.category;
     const agentAuto = merged.agentAuto;
@@ -139,6 +152,7 @@ export class Logger {
         typeof agentAuto === "boolean" ? agentAuto : this.opts.agentAuto,
       message,
       ...(typeof traceId === "string" ? { trace_id: traceId } : {}),
+      ...(spanId ? { span_id: spanId } : {}),
       ...(this.opts.subsystem ? { subsystem: this.opts.subsystem } : {}),
       ...(typeof category === "string" ? { category } : {}),
       env: this.opts.env,

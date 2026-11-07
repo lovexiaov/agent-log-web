@@ -31,6 +31,8 @@ export interface LogContext {
   sessionId?: string;
   /** -> 顶层 `trace_id` */
   traceId?: string;
+  /** -> 顶层 `span_id`（Schema v1.1：16 位小写 hex，与 W3C traceparent span-id 同构） */
+  spanId?: string;
   /** -> 顶层 `event_type`（缺省 `log`） */
   event?: string;
   /** -> 顶层 `category` */
@@ -51,6 +53,7 @@ export interface LogEvent {
   agent_auto: boolean;
   message: string;
   trace_id?: string;
+  span_id?: string;
   subsystem?: string;
   category?: string;
   env?: string;
