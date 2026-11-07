@@ -13,7 +13,7 @@ function parse(line: string | undefined): Record<string, unknown> {
   return JSON.parse(line ?? "{}") as Record<string, unknown>;
 }
 
-/** Schema v1 允许的顶层字段（docs/logging-framework/schema/log-event.schema.json） */
+/** Schema v1.1 允许的顶层字段（docs/logging-framework/schema/log-event.schema.json） */
 const SCHEMA_REQUIRED = [
   "ts",
   "level",
@@ -25,6 +25,7 @@ const SCHEMA_REQUIRED = [
 ] as const;
 const SCHEMA_OPTIONAL = [
   "trace_id",
+  "span_id",
   "subsystem",
   "category",
   "env",
