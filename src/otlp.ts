@@ -66,8 +66,8 @@ const HTTP_METHOD_KEYS = ["method", "http_method", "http.method"] as const;
 const URL_KEYS = ["url", "url_full", "url.full"] as const;
 const STATUS_KEYS = ["status_code", "status", "statusCode", "http.status_code"] as const;
 const DURATION_KEYS = ["duration_ms", "durationMs", "duration"] as const;
-/** 规范键是 `statement`；`sql` / `query` 仅读取侧兼容旧数据。 */
-const SQL_KEYS = ["statement", "sql", "query"] as const;
+/** 规范键是 `statement`；无历史别名。 */
+const SQL_KEYS = ["statement"] as const;
 const DB_SYSTEM_KEYS = ["db_system", "db.system", "system"] as const;
 const DB_OPERATION_KEYS = ["operation", "op"] as const;
 
@@ -327,11 +327,11 @@ const SEVERITY: Record<string, { text: string; number: number }> = {
 /**
  * agent-log level → `severityText` / `severityNumber`。
  *
- * 读取侧别名 `warning` 归一化为 `warn`；未知 level **降级为 INFO**，
+ * 未知 level（含非规范的 `warning`）**降级为 INFO**，
  * 不让一次导出因为脏数据整体失败。
  */
 export function levelToSeverity(level: string | undefined): { text: string; number: number } {
-  const canonical = level === "warning" ? "warn" : (level ?? "info");
+  const canonical = level ?? "info";
   return SEVERITY[canonical] ?? SEVERITY["info"]!;
 }
 

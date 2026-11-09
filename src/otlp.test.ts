@@ -149,8 +149,8 @@ describe("级别映射", () => {
     }
   });
 
-  it("normalizes the warning alias and degrades unknown levels to INFO", () => {
-    expect(levelToSeverity("warning")).toEqual({ text: "WARN", number: 13 });
+  it("treats warning as non-canonical and degrades unknown levels to INFO", () => {
+    expect(levelToSeverity("warning")).toEqual({ text: "INFO", number: 9 });
     expect(levelToSeverity("nonsense")).toEqual({ text: "INFO", number: 9 });
     expect(levelToSeverity(undefined)).toEqual({ text: "INFO", number: 9 });
   });
@@ -315,13 +315,13 @@ describe("Span", () => {
     expect(stringAttr(span.attributes, "db.system")).toBe("postgresql");
   });
 
-  it("reads legacy `sql` / `query` keys for old events", () => {
+  it("ignores legacy `sql` / `query` keys (only `statement` is read)", () => {
     expect(
       eventToSpan(makeEvent({ event_type: "db_query", payload: { operation: "exec", sql: "INSERT 1" } }))?.name,
-    ).toBe("exec INSERT 1");
+    ).toBe("exec ");
     expect(
       eventToSpan(makeEvent({ event_type: "db_query", payload: { operation: "exec", query: "INSERT 2" } }))?.name,
-    ).toBe("exec INSERT 2");
+    ).toBe("exec ");
   });
 
   it("emits no span for non-operation events", () => {
