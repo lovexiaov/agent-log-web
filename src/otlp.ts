@@ -39,6 +39,7 @@ export const SCOPE = { name: "agentlog.otlp", version: SDK_VERSION } as const;
 // OTel 语义约定键（部分仍是 Experimental，统一收口在这里）。
 const SEMCONV = {
   serviceName: "service.name",
+  serviceVersion: "service.version",
   deploymentEnv: "deployment.environment",
   sessionId: "session.id",
   enduserId: "enduser.id",
@@ -343,6 +344,10 @@ function resourceAttributes(event: LogEvent): OtlpKeyValue[] {
   const attrs: OtlpKeyValue[] = [toKeyValue(SEMCONV.serviceName, event.service || "app")];
   if (event.env) {
     attrs.push(toKeyValue(SEMCONV.deploymentEnv, event.env));
+  }
+  if (event.release) {
+    // Schema v1.3: release -> OTel service.version.
+    attrs.push(toKeyValue(SEMCONV.serviceVersion, event.release));
   }
   if (event.session_id) {
     attrs.push(toKeyValue(SEMCONV.sessionId, event.session_id));

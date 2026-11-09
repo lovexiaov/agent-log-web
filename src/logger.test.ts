@@ -29,6 +29,7 @@ const SCHEMA_OPTIONAL = [
   "subsystem",
   "category",
   "env",
+  "release",
   "user_id",
   "payload",
 ] as const;
@@ -84,6 +85,37 @@ describe("Logger", () => {
 });
 
 describe("Schema v1（线格式）", () => {
+  it("release 配置后每条事件都带顶层 release", () => {
+    const { logger, lines } = makeLogger({ release: "1.4.2+sha.abc" });
+    logger.info("manual with release");
+    logger.error("auto-like error", { event: "crash" });
+
+    expect(lines).toHaveLength(2);
+    for (const line of lines) {
+      expect(parse(line).release).toBe("1.4.2+sha.abc");
+    }
+  });
+
+  it("未配置 release 时不写该键", () => {
+    const { logger, lines } = makeLogger();
+    logger.info("no release");
+    expect(parse(lines[0]!)).not.toHaveProperty("release");
+  });
+
+  it("release 是保留键，不会漏进 payload", () => {
+    const { logger, lines } = makeLogger({ release: "1.4.2" });
+    logger.info("x", { release: "9.9.9" });
+    const evt = parse(lines[0]!);
+    expect(evt.release).toBe("1.4.2");
+    expect(evt.payload ?? {}).not.toHaveProperty("release");
+  });
+
+  it("超长 release 被丢弃而不是写出违规行", () => {
+    const { logger, lines } = makeLogger({ release: "x".repeat(200) });
+    logger.info("too long");
+    expect(parse(lines[0]!)).not.toHaveProperty("release");
+  });
+
   it("顶层字段集严格等于 schema，不泄漏内部 camelCase 命名", () => {
     const { logger, lines } = makeLogger({ subsystem: "com.test.web" });
     logger.info("hello", {

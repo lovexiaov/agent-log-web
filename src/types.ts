@@ -57,6 +57,8 @@ export interface LogEvent {
   subsystem?: string;
   category?: string;
   env?: string;
+  /** 发布标识（Schema v1.3，可选）：semver / git sha / build number */
+  release?: string;
   user_id?: string;
   payload?: Record<string, unknown>;
 }
@@ -83,6 +85,8 @@ export type LogSink = (line: string) => void;
 export interface LoggerOptions {
   service: string;
   env: string;
+  /** 发布标识（可选）：写入每条事件的顶层 `release` */
+  release?: string;
   /** 子系统标识（反向域名等），写入顶层 `subsystem` */
   subsystem?: string;
   level?: LogLevelName;

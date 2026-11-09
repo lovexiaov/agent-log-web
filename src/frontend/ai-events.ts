@@ -33,5 +33,14 @@ export function logAiGuardrail(logger: Logger, ctx: AiContext, guardrailType: st
 }
 
 export function logAiError(logger: Logger, ctx: AiContext, errorType: string, errorMessage: string, stack?: string) {
-  logger.error('ai interaction error', { ...ctx, errorType, errorMessage, stack, event: 'ai_error' });
+  logger.error('ai interaction error', {
+    ...ctx,
+    errorType,
+    errorMessage,
+    exception: errorType,
+    exception_message: errorMessage,
+    stack,
+    mechanism: 'handled',
+    event: 'ai_error',
+  });
 }

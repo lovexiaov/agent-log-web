@@ -29,6 +29,7 @@ const RESERVED_CONTEXT_KEYS = [
   "event",
   "category",
   "agentAuto",
+  "release",
 ] as const;
 
 /**
@@ -79,6 +80,7 @@ const defaultSink: LogSink = (line) => {
 interface ResolvedOptions {
   service: string;
   env: string;
+  release?: string;
   subsystem?: string;
   level: LogLevelName;
   format: "json" | "pretty";
@@ -96,6 +98,7 @@ export class Logger {
     this.opts = {
       service: options.service,
       env: options.env,
+      ...(options.release ? { release: options.release } : {}),
       ...(options.subsystem ? { subsystem: options.subsystem } : {}),
       level: options.level ?? "info",
       format: options.format ?? "json",
@@ -162,6 +165,9 @@ export class Logger {
       ...(this.opts.subsystem ? { subsystem: this.opts.subsystem } : {}),
       ...(typeof category === "string" ? { category } : {}),
       env: this.opts.env,
+      ...(this.opts.release && this.opts.release.length <= 128
+        ? { release: this.opts.release }
+        : {}),
       ...(typeof userId === "string" ? { user_id: userId } : {}),
       ...(cleanPayload ? { payload: cleanPayload } : {}),
     };

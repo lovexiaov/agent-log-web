@@ -58,18 +58,24 @@ import { createLogger } from "cn.lovexiaov.agent.log";
 const logger = createLogger({
   service: "web-api",
   env: "prod",
+  release: "1.4.2", // Schema v1.3：发布标识，盖章到每条事件（可选）
   subsystem: "com.example.web",
   level: "info",
 });
 
-logger.info("订单查询完成", { userId: "u_1", traceId: "trace_abc" }, "http_request");
+logger.info("订单查询完成", { userId: "u_1" }, "http_request");
 // -> {"ts":"...","level":"info","service":"web-api","event_type":"http_request",
 //     "session_id":"...","agent_auto":false,"message":"订单查询完成",
-//     "trace_id":"trace_abc","subsystem":"com.example.web","env":"prod","user_id":"u_1"}
+//     "subsystem":"com.example.web","env":"prod","release":"1.4.2","user_id":"u_1"}
 ```
 
 调用侧写 camelCase（`event / traceId / userId / sessionId / agentAuto / category`），
 logger 在序列化边界映射为 snake_case；**其余键一律进 `payload`**（顶层字段集封闭）。
+
+`release` 不是调用点参数而是**配置项**：配置后由 logger 统一盖章（含 `ErrorBoundary` /
+`logAiError` 等自动事件），未配置则不写该键；导出 OTLP 时映射为 resource 的
+`service.version`。`traceId` 必须 32 位 hex（如 `3f9a1c2b7d4e4a5b8c9d0e1f2a3b4c5d`），
+否则该字段被丢弃（事件照写）。
 
 ### 追踪串联
 

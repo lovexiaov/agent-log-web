@@ -378,6 +378,19 @@ describe("批次与 resource", () => {
     expect(attrs.filter((kv) => kv.key === "service.name")).toHaveLength(1);
   });
 
+  it("maps release to service.version", () => {
+    const body = toOtlpLogs([makeEvent({ release: "1.4.2" })]);
+    const attrs = body.resourceLogs[0]!.resource.attributes;
+    expect(stringAttr(attrs, "service.version")).toBe("1.4.2");
+  });
+
+  it("builtin release wins over extraResource", () => {
+    const body = toOtlpLogs([makeEvent({ release: "1.4.2" })], { "service.version": "9.9.9" });
+    const attrs = body.resourceLogs[0]!.resource.attributes;
+    expect(stringAttr(attrs, "service.version")).toBe("1.4.2");
+    expect(attrs.filter((kv) => kv.key === "service.version")).toHaveLength(1);
+  });
+
   it("skips resource groups without operation events in the traces signal", () => {
     const body = toOtlpSpans([
       makeEvent({ message: "plain" }),
