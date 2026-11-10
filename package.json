@@ -1,6 +1,6 @@
 {
   "name": "cn.lovexiaov.agent.log",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "面向 Agent 的 Web 可观测底座：结构化日志（Schema v1）、追踪串联、前端崩溃捕获、AI 交互事件",
   "type": "module",
   "license": "MIT",

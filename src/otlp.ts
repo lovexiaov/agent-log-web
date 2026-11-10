@@ -25,7 +25,7 @@ import { sha256Hex } from "./sha256.js";
 import type { LogEvent } from "./types.js";
 
 /** 与项目版本保持一致（测试断言）。 */
-export const SDK_VERSION = "1.0.0";
+export const SDK_VERSION = "1.3.0";
 
 /** OTel `SpanKind.SPAN_KIND_CLIENT`。 */
 export const SPAN_KIND_CLIENT = 3;
