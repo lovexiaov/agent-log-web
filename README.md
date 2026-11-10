@@ -100,6 +100,39 @@ logAiRequest(logger, { sessionId: "s1", model: "gpt-4o" }, "总结这段对话")
 </ErrorBoundary>;
 ```
 
+## AI 交互事件（Schema v1.4）
+
+六端共用同一份 AI 事件契约（`INTERFACE.md` §4.4）。`logAi*` 函数名与参数顺序保持不变，
+payload 改用标准 snake_case 词表，并显式写 `category: "ai"` / `agentAuto: false`。
+
+```ts
+import { logAiRequest, logAiResponse, logAiError } from "cn.lovexiaov.agent.log/frontend/ai-events";
+
+const ctx = { sessionId: "s1", model: "gpt-4o" };
+logAiRequest(logger, ctx, "总结这段对话", { request_id: "req_001", provider: "openai" });
+logAiResponse(logger, ctx, 1280, 530, { request_id: "req_001", prompt_tokens: 320 });
+logAiError(logger, ctx, "RateLimitError", "429 too many requests", undefined, { request_id: "req_001" });
+```
+
+| 函数 | `event_type` | level |
+| --- | --- | --- |
+| `logAiRequest` | `ai_request_initiated` | info |
+| `logAiResponse` | `ai_response_received` | info |
+| `logAiToolCall` | `ai_tool_call_initiated` | info |
+| `logAiToolResult` | `ai_tool_call_completed` | info |
+| `logAiGuardrail` | `ai_guardrail_triggered` | warn |
+| `logAiError` | `ai_error` | error |
+
+**迁移（v1.3 → v1.4）**：`promptText`→`prompt_text`、`toolName`→`tool_name`、
+`toolArguments`→`tool_arguments`、`toolCallLatency`→`tool_call_latency_ms`、
+`responseLength`→`response_length`、`tokenUsage`→`total_tokens`、
+`guardrailType`→`guardrail_type`、`errorType`/`errorMessage`→`exception`/`exception_message`。
+每个函数新增可选末尾 `extra` 用于追加 `request_id` / `provider` / token 明细或业务键。
+
+`request_id` 用于串联「请求→响应→工具→错误」同一轮对话，框架不强制生成、不校验。
+`ai_error` 复用 v1.3 异常词表。OTLP 导出只产 LogRecord，**不产 Span**；若下游需要
+组 span，请显式传 `spanId`。
+
 ## 开发（独立于宿主）
 
 ```bash

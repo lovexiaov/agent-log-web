@@ -4,6 +4,30 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/); this project adheres to
 Schema v1 (frozen 2026-11-02).
 
+## [1.4.0] - 2026-11-11
+
+Schema v1.4（向后兼容增量）：六端统一的 AI 交互事件。不改变任何既有字段语义与必填约束。
+
+### Added
+
+- `src/types.ts` 新增 `AI_EVENT_TYPES` / `AiEventType`；`package.json` 补
+  `./frontend/ai-events` 导出（此前 README 示例的导入路径无法解析）。
+- `logAi*` 每个函数新增可选末尾 `extra`，用于追加标准词表字段（`request_id` /
+  `provider` / token 明细）或业务键；6 个标准 `event_type` 与其余五端逐字对齐。
+
+### Changed（AI 事件 payload 字段名迁移）
+
+- **保留** `logAi*` 函数名与既有参数顺序，payload 改用 INTERFACE.md §4.4 的标准
+  snake_case 词表，并显式写 `category: "ai"` / `agentAuto: false`；level 为
+  request / response / tool = info，guardrail = warn，error = error。
+- 迁移对照：`promptText` → `prompt_text`、`toolName` → `tool_name`、
+  `toolArguments` → `tool_arguments`、`toolCallLatency` → `tool_call_latency_ms`、
+  `responseLength` → `response_length`、`tokenUsage` → `total_tokens`、
+  `guardrailType` → `guardrail_type`、`errorType` / `errorMessage` →
+  `exception` / `exception_message`。旧 camelCase 键不再写出。
+- OTLP：AI 事件只产 LogRecord，**不产 Span**；可挂 `span_id` 供下游组 span。
+  `ai_error` 复用 v1.3 异常词表，映射为 `exception.*` 属性。
+
 ## [1.3.0] - 2026-11-10
 
 Schema v1.3（向后兼容增量）。

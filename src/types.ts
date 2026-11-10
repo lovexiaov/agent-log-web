@@ -43,6 +43,21 @@ export interface LogContext {
   [key: string]: unknown;
 }
 
+/**
+ * Schema v1.4：六端统一的 AI 交互事件类型（见 INTERFACE.md §4.4）。
+ * `event_type` 本身是开放 string，这里只列出框架承认的 6 个标准值。
+ */
+export const AI_EVENT_TYPES = [
+  "ai_request_initiated",
+  "ai_response_received",
+  "ai_tool_call_initiated",
+  "ai_tool_call_completed",
+  "ai_guardrail_triggered",
+  "ai_error",
+] as const;
+
+export type AiEventType = (typeof AI_EVENT_TYPES)[number];
+
 /** Schema v1 线格式：所有端输出的 JSON 必须长这样，顶层禁止扩展 */
 export interface LogEvent {
   ts: string;

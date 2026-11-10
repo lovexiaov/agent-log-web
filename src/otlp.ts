@@ -25,7 +25,7 @@ import { sha256Hex } from "./sha256.js";
 import type { LogEvent } from "./types.js";
 
 /** 与项目版本保持一致（测试断言）。 */
-export const SDK_VERSION = "1.3.0";
+export const SDK_VERSION = "1.4.0";
 
 /** OTel `SpanKind.SPAN_KIND_CLIENT`。 */
 export const SPAN_KIND_CLIENT = 3;
@@ -422,7 +422,8 @@ export function eventAttributes(event: LogEvent): OtlpKeyValue[] {
   }
   const payload = event.payload ?? {};
   attrs.push(...toKeyValues(payload, "payload."));
-  if (event.event_type === "crash" || event.event_type === "hang") {
+  // Schema v1.4：ai_error 复用 v1.3 异常词表，与 crash/hang 同样映射为 exception.*
+  if (event.event_type === "crash" || event.event_type === "hang" || event.event_type === "ai_error") {
     attrs.push(...exceptionAttributes(payload));
   }
   return attrs;
