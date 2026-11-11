@@ -4,16 +4,26 @@
   "description": "面向 Agent 的 Web 可观测底座：结构化日志（Schema v1）、追踪串联、前端崩溃捕获、AI 交互事件",
   "type": "module",
   "license": "MIT",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./frontend": "./src/frontend/index.tsx",
-    "./frontend/ai-events": "./src/frontend/ai-events.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./frontend": {
+      "types": "./dist/frontend/index.d.ts",
+      "import": "./dist/frontend/index.js"
+    },
+    "./frontend/ai-events": {
+      "types": "./dist/frontend/ai-events.d.ts",
+      "import": "./dist/frontend/ai-events.js"
+    }
   },
   "files": [
-    "src"
+    "dist"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
